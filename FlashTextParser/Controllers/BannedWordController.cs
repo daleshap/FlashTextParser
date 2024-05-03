@@ -115,7 +115,7 @@ namespace FlashTextParser.Controllers
 
         [Route("SanitizeText")]
         [HttpPost]
-        public async Task<JsonResult> SanitizeText(string textToSanitize)
+        public JsonResult SanitizeText([FromBody]string textToSanitize)
         {
             try
             {
@@ -126,7 +126,7 @@ namespace FlashTextParser.Controllers
                                                                             new BannedWord
                                                                             {
                                                                                 IdKey = row.Field<int>("idKey"),
-                                                                                Word= row.Field<string>("word"),
+                                                                                Word = row.Field<string>("word"),
                                                                                 CaseSensitive = row.Field<bool>("caseSensitive"),
                                                                                 WholeWordOnly = row.Field<bool>("wholeWordOnly"),
                                                                                 TrimWord= row.Field<bool>("trimWord")
@@ -136,7 +136,7 @@ namespace FlashTextParser.Controllers
                 string result = textToSanitize;
                 foreach (BannedWord bannedWord in bannedWords)
                 {
-                    if(bannedWord.TrimWord)
+                    if (bannedWord.TrimWord)
                     {
                         bannedWord.Word = bannedWord.Word.Trim();
                     }
