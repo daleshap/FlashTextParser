@@ -14,15 +14,12 @@ namespace FlashTextParser.Controllers
     {
 
         private readonly IConfiguration _configuration;
-        private readonly IWebHostEnvironment _webHostEnvironment;
         private string _sqlDataSource;
-        public BannedWordController(IConfiguration configuration, IWebHostEnvironment webHostEnvironment)
+        public BannedWordController(IConfiguration configuration)
         {
             _configuration = configuration;
-            _webHostEnvironment = webHostEnvironment;
             _sqlDataSource = _configuration.GetConnectionString("TextParserDatabase");
         }
-
         [HttpPost]
         public async Task<JsonResult> Post(BannedWord bannedWord)
         {
@@ -134,33 +131,25 @@ namespace FlashTextParser.Controllers
                                                                             }).ToList();
 
                 string result = textToSanitize;
-                foreach (BannedWord bannedWord in bannedWords)
+                
+                foreach (BannedWord bannedWord in bannedWords.OrderByDescending(w => w.Word.Length))
                 {
+                    string replacementString = bannedWord.Word;
                     if (bannedWord.TrimWord)
                     {
-                        bannedWord.Word = bannedWord.Word.Trim();
+                        replacementString = bannedWord.Word.Trim();
+                    }
+                    if(bannedWord.WholeWordOnly)
+                    {
+                        replacementString = @"\b" + replacementString + @"\b";
                     }
                     if(bannedWord.CaseSensitive)
                     {
-                        if (bannedWord.WholeWordOnly)
-                        {
-                            result = Regex.Replace(result, " " + bannedWord.Word + " ", " " + new string('*', bannedWord.Word.Length) + " ");
-                        }
-                        else
-                        {
-                            result = Regex.Replace(result, bannedWord.Word, new string('*', bannedWord.Word.Length));
-                        }
+                        result = Regex.Replace(result, replacementString, new string('*', bannedWord.Word.Length));
                     }
                     else
                     {
-                        if (bannedWord.WholeWordOnly)
-                        {
-                            result = Regex.Replace(result, " " + bannedWord.Word + " ", " " + new string('*', bannedWord.Word.Length) + " ", RegexOptions.IgnoreCase);
-                        }
-                        else
-                        {
-                            result = Regex.Replace(result, bannedWord.Word, new string('*', bannedWord.Word.Length), RegexOptions.IgnoreCase);
-                        }
+                        result = Regex.Replace(result, replacementString, new string('*', bannedWord.Word.Length), RegexOptions.IgnoreCase);
                     }
                                         
                 }
@@ -170,7 +159,7 @@ namespace FlashTextParser.Controllers
             catch (Exception ex)
             {
                 //TODO: log exception ex 
-                return new JsonResult("anonymous.png");
+                return new JsonResult("Could not sanitize string");
 
             }
 

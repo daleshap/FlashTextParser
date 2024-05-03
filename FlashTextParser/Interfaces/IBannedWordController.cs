@@ -8,4 +8,7 @@ public interface IBannedWordController
     Task<JsonResult> AddBannedWordAsync(BannedWord bannedWord);
     Task<JsonResult> UpdateBannedWordAsync(int id, BannedWord bannedWord);
     Task<JsonResult> DeleteBannedWordAsync(int id);
+
+    JsonResult SanitizeText(string textToSanitize);
+
 }
