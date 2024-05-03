@@ -131,7 +131,7 @@ namespace FlashTextParser.Controllers
                                                                             }).ToList();
 
                 string result = textToSanitize;
-                
+                Regex regex = new Regex(@"^[a-zA-Z0-9_[\])({}-]+$");
                 foreach (BannedWord bannedWord in bannedWords.OrderByDescending(w => w.Word.Length))
                 {
                     string replacementString = bannedWord.Word;
@@ -142,6 +142,11 @@ namespace FlashTextParser.Controllers
                     if(bannedWord.WholeWordOnly)
                     {
                         replacementString = @"\b" + replacementString + @"\b";
+                    }
+                    //Handle Special Characters here (this case is only *)
+                    if(replacementString.Contains("*"))
+                    {
+                        replacementString = replacementString.Replace("*", "\\*"); 
                     }
                     if(bannedWord.CaseSensitive)
                     {
