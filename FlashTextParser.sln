@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlashTextParser", "FlashTextParser\FlashTextParser.csproj", "{BDB5E135-1839-4DAB-9424-4525F35B2A97}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlashTextParser.Test", "FlashTextParser.Test\FlashTextParser.Test.csproj", "{576A470A-CE65-47F2-8842-3F06E30C0912}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BDB5E135-1839-4DAB-9424-4525F35B2A97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BDB5E135-1839-4DAB-9424-4525F35B2A97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BDB5E135-1839-4DAB-9424-4525F35B2A97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BDB5E135-1839-4DAB-9424-4525F35B2A97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{576A470A-CE65-47F2-8842-3F06E30C0912}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{576A470A-CE65-47F2-8842-3F06E30C0912}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{576A470A-CE65-47F2-8842-3F06E30C0912}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{576A470A-CE65-47F2-8842-3F06E30C0912}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E1F40E62-B28F-4A31-AD53-23E34F74E229}
+	EndGlobalSection
+EndGlobal
