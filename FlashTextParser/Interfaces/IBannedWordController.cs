@@ -4,11 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 namespace FlashTextParser.Interfaces;
 public interface IBannedWordController
 {
-    Task<JsonResult> GetAllBannedWordsAsync();
-    Task<JsonResult> AddBannedWordAsync(BannedWord bannedWord);
-    Task<JsonResult> UpdateBannedWordAsync(int id, BannedWord bannedWord);
-    Task<JsonResult> DeleteBannedWordAsync(int id);
+    Task<JsonResult> GetAllBannedWords();
+    Task<JsonResult> GetBannedWord(int idKey, string word);
+    Task<JsonResult> AddBannedWord(BannedWord bannedWord);
+    Task<JsonResult> UpdateBannedWord(int id, BannedWord bannedWord);
+    Task<JsonResult> DeleteBannedWord(int id);
 
     JsonResult SanitizeText(string textToSanitize);
+
 
 }

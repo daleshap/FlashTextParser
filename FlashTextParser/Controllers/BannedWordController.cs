@@ -21,7 +21,7 @@ namespace FlashTextParser.Controllers
             _sqlDataSource = _configuration.GetConnectionString("TextParserDatabase");
         }
         [HttpPost]
-        public async Task<JsonResult> Post(BannedWord bannedWord)
+        public async Task<JsonResult> CreateBannedWord(BannedWord bannedWord)
         {
             string query = "sp_CreateBannedWord";
             using (SqlConnection conn = new SqlConnection(_sqlDataSource))
@@ -44,7 +44,7 @@ namespace FlashTextParser.Controllers
 
 
         [HttpGet]
-        public async Task<JsonResult> Get()
+        public async Task<JsonResult> GetAllBannedWords()
         {
             string query = "sp_GetAllBannedWords";
             DataTable table = new DataTable();
@@ -66,8 +66,34 @@ namespace FlashTextParser.Controllers
             return new JsonResult(table);
         }
 
+        [Route("GetBannedWord")]
+        [HttpGet]
+        public async Task<JsonResult> GetBannedWord(int idKey, string word)
+        {
+            string query = "sp_GetBannedWord";
+            DataTable table = new DataTable();
+            using (SqlConnection conn = new SqlConnection(_sqlDataSource))
+            {
+                await conn.OpenAsync();
+                using (SqlCommand command = new SqlCommand(query))
+                {
+                    command.Connection = conn;
+                    command.CommandType = CommandType.StoredProcedure;
+                    command.Parameters.AddWithValue("@IdKey", idKey);
+                    command.Parameters.AddWithValue("@Word", word);
+                    using (SqlDataReader dataReader = await command.ExecuteReaderAsync())
+                    {
+                        table.Load(dataReader);
+                    }
+                    conn.Close();
+                }
+            }
+
+            return new JsonResult(table);
+        }
+
         [HttpPut]
-        public async Task<JsonResult> Put(BannedWord bannedWord)
+        public async Task<JsonResult> UpdateBannedWord(BannedWord bannedWord)
         {
             string query = "sp_UpdateBannedWord";
             DataTable table = new DataTable();
@@ -91,7 +117,7 @@ namespace FlashTextParser.Controllers
         }
 
         [HttpDelete]
-        public async Task<JsonResult> Delete([FromBody] int bannedWordId)
+        public async Task<JsonResult> DeleteBannedWord([FromBody] int bannedWordId)
         {
             string query = "sp_DeleteBannedWord";
             DataTable table = new DataTable();
@@ -116,7 +142,7 @@ namespace FlashTextParser.Controllers
         {
             try
             {
-                DataTable dt = (DataTable)Get().Result.Value;
+                DataTable dt = (DataTable)GetAllBannedWords().Result.Value;
                 
 
                 List<BannedWord> bannedWords = dt.AsEnumerable().Select(row =>
@@ -169,6 +195,7 @@ namespace FlashTextParser.Controllers
             }
 
         }
+
 
     }
 }
