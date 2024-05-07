@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using FlashTextParser.Models;
 using System.Text.RegularExpressions;
+using FlashTextParser.Interfaces;
 
 namespace FlashTextParser.Controllers
 {
@@ -13,189 +14,56 @@ namespace FlashTextParser.Controllers
     public class BannedWordController : ControllerBase
     {
 
-        private readonly IConfiguration _configuration;
-        private string _sqlDataSource;
-        public BannedWordController(IConfiguration configuration)
+        private readonly IBannedWordRepository _bannedWordRepository;
+        public BannedWordController(IBannedWordRepository bannedWordRepository)
         {
-            _configuration = configuration;
-            _sqlDataSource = _configuration.GetConnectionString("TextParserDatabase");
+            _bannedWordRepository = bannedWordRepository;  
         }
         [HttpPost]
         public async Task<JsonResult> CreateBannedWord(BannedWord bannedWord)
         {
-            string query = "sp_CreateBannedWord";
-            using (SqlConnection conn = new SqlConnection(_sqlDataSource))
-            {
-                await conn.OpenAsync();
-                using (SqlCommand command = new SqlCommand(query))
-                {
-                    command.Connection = conn;
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@Word", bannedWord.Word);
-                    command.Parameters.AddWithValue("@CaseSensitive", bannedWord.CaseSensitive);
-                    command.Parameters.AddWithValue("@WholeWordOnly", bannedWord.WholeWordOnly);
-                    command.Parameters.AddWithValue("@TrimWord", bannedWord.TrimWord);
-                    await command.ExecuteNonQueryAsync();
-                    conn.Close();
-                }
-            }
-            return new JsonResult(bannedWord.Word + " added to list of banned words");
+            var result = await _bannedWordRepository.CreateBannedWord(bannedWord);
+            return new JsonResult(result);
         }
-
 
         [HttpGet]
         public async Task<JsonResult> GetAllBannedWords()
-        {
-            string query = "sp_GetAllBannedWords";
-            DataTable table = new DataTable();
-            using (SqlConnection conn = new SqlConnection(_sqlDataSource))
-            {
-                await conn.OpenAsync();
-                using (SqlCommand command = new SqlCommand(query))
-                {
-                    command.Connection = conn;
-                    command.CommandType = CommandType.StoredProcedure;
-                    using (SqlDataReader dataReader = await command.ExecuteReaderAsync())
-                    {
-                        table.Load(dataReader);
-                    }
-                    conn.Close();
-                }
-            }
-
-            return new JsonResult(table);
+        {          
+            var result = await _bannedWordRepository.GetAllBannedWords();
+            return new JsonResult(result);
         }
 
         [Route("GetBannedWord")]
         [HttpGet]
         public async Task<JsonResult> GetBannedWord(int idKey, string word)
         {
-            string query = "sp_GetBannedWord";
-            DataTable table = new DataTable();
-            using (SqlConnection conn = new SqlConnection(_sqlDataSource))
-            {
-                await conn.OpenAsync();
-                using (SqlCommand command = new SqlCommand(query))
-                {
-                    command.Connection = conn;
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@IdKey", idKey);
-                    command.Parameters.AddWithValue("@Word", word);
-                    using (SqlDataReader dataReader = await command.ExecuteReaderAsync())
-                    {
-                        table.Load(dataReader);
-                    }
-                    conn.Close();
-                }
-            }
-
-            return new JsonResult(table);
+            var result = await _bannedWordRepository.GetBannedWord(idKey, word);
+            return new JsonResult(result);
         }
 
         [HttpPut]
         public async Task<JsonResult> UpdateBannedWord(BannedWord bannedWord)
         {
-            string query = "sp_UpdateBannedWord";
-            DataTable table = new DataTable();
-            using (SqlConnection conn = new SqlConnection(_sqlDataSource))
-            {
-                await conn.OpenAsync();
-                using (SqlCommand command = new SqlCommand(query))
-                {
-                    command.Connection = conn;
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@WordId", bannedWord.IdKey); 
-                    command.Parameters.AddWithValue("@Word", bannedWord.Word);
-                    command.Parameters.AddWithValue("@CaseSensitive", bannedWord.CaseSensitive);
-                    command.Parameters.AddWithValue("@WholeWordOnly", bannedWord.WholeWordOnly);
-                    command.Parameters.AddWithValue("@TrimWord", bannedWord.TrimWord);
-                    await command.ExecuteNonQueryAsync();
-                }
-                conn.Close();
-            }
-            return new JsonResult("Word Updated Successfully");
+            var result = await _bannedWordRepository.UpdateBannedWord(bannedWord);
+            return new JsonResult(result);
         }
 
         [HttpDelete]
-        public async Task<JsonResult> DeleteBannedWord([FromBody] int bannedWordId)
+        public async Task<JsonResult> DeleteBannedWord(int bannedWordId)
         {
-            string query = "sp_DeleteBannedWord";
-            DataTable table = new DataTable();
-            using (SqlConnection conn = new SqlConnection(_sqlDataSource))
-            {
-                await conn.OpenAsync();
-                using (SqlCommand command = new SqlCommand(query))
-                {
-                    command.Connection = conn;
-                    command.CommandType = CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("@WordId", bannedWordId);
-                    await command.ExecuteNonQueryAsync();
-                }
-                conn.Close();
-            }
-            return new JsonResult(table);
+
+            var result = await _bannedWordRepository.DeleteBannedWord(bannedWordId);
+            return new JsonResult(result);
         }
 
         [Route("SanitizeText")]
         [HttpPost]
-        public JsonResult SanitizeText([FromBody]string textToSanitize)
+        public async Task<JsonResult> SanitizeText([FromBody] string textToSanitize)
         {
-            try
-            {
-                DataTable dt = (DataTable)GetAllBannedWords().Result.Value;
-                
 
-                List<BannedWord> bannedWords = dt.AsEnumerable().Select(row =>
-                                                                            new BannedWord
-                                                                            {
-                                                                                IdKey = row.Field<int>("idKey"),
-                                                                                Word = row.Field<string>("word"),
-                                                                                CaseSensitive = row.Field<bool>("caseSensitive"),
-                                                                                WholeWordOnly = row.Field<bool>("wholeWordOnly"),
-                                                                                TrimWord= row.Field<bool>("trimWord")
-
-                                                                            }).ToList();
-
-                string result = textToSanitize;
-                Regex regex = new Regex(@"^[a-zA-Z0-9_[\])({}-]+$");
-                foreach (BannedWord bannedWord in bannedWords.OrderByDescending(w => w.Word.Length))
-                {
-                    string replacementString = bannedWord.Word;
-                    if (bannedWord.TrimWord)
-                    {
-                        replacementString = bannedWord.Word.Trim();
-                    }
-                    if(bannedWord.WholeWordOnly)
-                    {
-                        replacementString = @"\b" + replacementString + @"\b";
-                    }
-                    //Handle Special Characters here (this case is only *)
-                    if(replacementString.Contains("*"))
-                    {
-                        replacementString = replacementString.Replace("*", "\\*"); 
-                    }
-                    if(bannedWord.CaseSensitive)
-                    {
-                        result = Regex.Replace(result, replacementString, new string('*', bannedWord.Word.Length));
-                    }
-                    else
-                    {
-                        result = Regex.Replace(result, replacementString, new string('*', bannedWord.Word.Length), RegexOptions.IgnoreCase);
-                    }
-                                        
-                }
-
-                return new JsonResult(result);
-            }
-            catch (Exception ex)
-            {
-                //TODO: log exception ex 
-                return new JsonResult("Could not sanitize string");
-
-            }
+            var result = await _bannedWordRepository.SanitizeText(textToSanitize);
+            return new JsonResult(result);
 
         }
-
-
     }
 }

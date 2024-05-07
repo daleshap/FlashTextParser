@@ -13,14 +13,14 @@ using System.Text;
 using System.IO;
 using System.Text.Json;
 using System.Linq;
+using FlashTextParser.Repos;
 
 namespace FlashTextParser.Tests.Controllers
 {
     [TestFixture]
-    public class BannedWordControllerTests
+    public class BannedWordRepositoryTests
     {
-        private BannedWordController _controller;
-        private Mock<IConfiguration> _configurationMock;
+        private BannedWordRepository _bannedWordRepository;
         private string _testWord;
         private int _testWordId = 0;
 
@@ -37,9 +37,9 @@ namespace FlashTextParser.Tests.Controllers
                     .AddInMemoryCollection(configValues)
                     .Build();
 
-                _controller = new BannedWordController(configuration);
+                _bannedWordRepository = new BannedWordRepository(configuration);
 
-                
+
                 _testWord = Guid.NewGuid().ToString();
             }
             catch (Exception ex)
@@ -49,47 +49,42 @@ namespace FlashTextParser.Tests.Controllers
         }
 
         [Test]
-        public async Task Post_ReturnsJsonResult_WithCorrectMessage()
+        public async Task Post_WithCorrectMessage()
         {
             // Arrange
             var bannedWord = new BannedWord { Word = _testWord, CaseSensitive = true, WholeWordOnly = false, TrimWord = false };
 
             // Act
-            var result = await _controller.CreateBannedWord(bannedWord);
+            var result = await _bannedWordRepository.CreateBannedWord(bannedWord);
 
             // Assert
-            Assert.IsInstanceOf<JsonResult>(result);
-            var jsonResult = (JsonResult)result;
-            Assert.AreEqual($"{_testWord} added to list of banned words", jsonResult.Value);
+            Assert.IsInstanceOf<string>(result);
+            Assert.AreEqual($"{_testWord} added to list of banned words", result);
         }
 
         [Test]
-        public async Task Get_ReturnsJsonResult_WithDataTable()
+        public async Task Get_Returns_WithDataTable()
         {
             // Arrange
 
             // Act
-            var result = await _controller.GetAllBannedWords();
+            var result = await _bannedWordRepository.GetAllBannedWords();
 
             // Assert
-            Assert.IsInstanceOf<JsonResult>(result);
-            var jsonResult = (JsonResult)result;
-            Assert.IsInstanceOf<DataTable>(jsonResult.Value);
+            Assert.IsInstanceOf<DataTable>(result);
         }
         [Test]
         public async Task TestCRUDProcess()
         {
             // Create Word
             var bannedWord = new BannedWord { Word = _testWord, CaseSensitive = true, WholeWordOnly = false, TrimWord = false };
-            var result = await _controller.CreateBannedWord(bannedWord);
-            Assert.IsInstanceOf<JsonResult>(result);
-            var jsonResult = (JsonResult)result;
-            Assert.AreEqual($"{_testWord} added to list of banned words", jsonResult.Value);
+            var addResult = await _bannedWordRepository.CreateBannedWord(bannedWord);
+            Assert.AreEqual($"{_testWord} added to list of banned words", addResult);
 
 
             // GetWordByName
-            result = await _controller.GetBannedWord(0, _testWord);
-            DataTable dt = (DataTable)result.Value;
+            var getResult = await _bannedWordRepository.GetBannedWord(0, _testWord);
+            DataTable dt = getResult;
             List<BannedWord> bannedWords = dt.AsEnumerable().Select(row =>
                                                                         new BannedWord
                                                                         {
@@ -104,16 +99,14 @@ namespace FlashTextParser.Tests.Controllers
             Assert.AreEqual(1, bannedWords.Count);
             _testWordId = bannedWords.FirstOrDefault().IdKey;
             // Assert
-            Assert.IsInstanceOf<JsonResult>(result);
-            jsonResult = (JsonResult)result;
-            Assert.IsInstanceOf<DataTable>(jsonResult.Value);
+            Assert.IsInstanceOf<DataTable>(getResult);
             Assert.AreEqual(_testWord, bannedWords.FirstOrDefault().Word);
 
 
 
             // GetWordById
-            result = await _controller.GetBannedWord(_testWordId, "");
-             dt = (DataTable)result.Value;
+            var getSingleResult = await _bannedWordRepository.GetBannedWord(_testWordId, "");
+            dt = getSingleResult;
             bannedWords = dt.AsEnumerable().Select(row =>
                                                                         new BannedWord
                                                                         {
@@ -128,9 +121,7 @@ namespace FlashTextParser.Tests.Controllers
             Assert.AreEqual(1, bannedWords.Count);
             _testWordId = bannedWords.FirstOrDefault().IdKey;
             // Assert
-            Assert.IsInstanceOf<JsonResult>(result);
-            jsonResult = (JsonResult)result;
-            Assert.IsInstanceOf<DataTable>(jsonResult.Value);
+            Assert.IsInstanceOf<DataTable>(getSingleResult);
             Assert.AreEqual(_testWord, bannedWords.FirstOrDefault().Word);
 
             //Update Word
@@ -138,35 +129,30 @@ namespace FlashTextParser.Tests.Controllers
             bannedWord = new BannedWord { IdKey = _testWordId, Word = "test", CaseSensitive = true, WholeWordOnly = false, TrimWord = false };
 
             // Act
-            result = await _controller.UpdateBannedWord(bannedWord);
+            var updateResult = await _bannedWordRepository.UpdateBannedWord(bannedWord);
 
             // Assert
-            Assert.IsInstanceOf<JsonResult>(result);
-            jsonResult = (JsonResult)result;
-            Assert.AreEqual("Word Updated Successfully", jsonResult.Value);
+            Assert.IsInstanceOf<string>(updateResult);
+            Assert.AreEqual("Word Updated Successfully", updateResult);
 
 
             //Delete Word
-            result = await _controller.DeleteBannedWord(_testWordId);
+            var deleteResult = await _bannedWordRepository.DeleteBannedWord(_testWordId);
 
             // Assert
-            Assert.IsInstanceOf<JsonResult>(result);
-            jsonResult = (JsonResult)result;
-            Assert.IsInstanceOf<DataTable>(jsonResult.Value);
+            Assert.IsInstanceOf<string>(deleteResult);
 
         }
 
 
-
+        
         [Test]
-        public async Task SanitizeText_ReturnsJsonResult_WithSanitizedText()
+        public async Task SanitizeText_Returns_WithSanitizedText()
         {
             // Arrange
-            var result = await _controller.GetAllBannedWords();
-            Assert.IsInstanceOf<JsonResult>(result);
-            var jsonResult = (JsonResult)result;
-            DataTable dt = (DataTable)result.Value;
-            List<BannedWord> bannedWords = dt.AsEnumerable().Select(row =>
+            var bannedWordsdt = await _bannedWordRepository.GetAllBannedWords();
+            Assert.IsInstanceOf<DataTable>(bannedWordsdt);
+            List<BannedWord> bannedWords = bannedWordsdt.AsEnumerable().Select(row =>
                                                                         new BannedWord
                                                                         {
                                                                             IdKey = row.Field<int>("idKey"),
@@ -179,11 +165,11 @@ namespace FlashTextParser.Tests.Controllers
             
             foreach(var bannedWord in bannedWords)
             {
-                result = _controller.SanitizeText(bannedWord.Word.Trim());
+                var result = _bannedWordRepository.SanitizeText(bannedWord.Word.Trim());
 
                 // Assert
-                Assert.IsInstanceOf<JsonResult>(result);
-                jsonResult = (JsonResult)result;
+                Assert.IsInstanceOf<JsonResult>(result.Result);
+                var jsonResult = result.Result;
                 Assert.IsInstanceOf<string>(jsonResult.Value);
                 var sanitizedText = (string)jsonResult.Value;
                 Assert.AreEqual(new string('*', bannedWord.Word.Length), sanitizedText);

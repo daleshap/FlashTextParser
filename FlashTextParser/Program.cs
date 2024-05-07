@@ -1,3 +1,6 @@
+using FlashTextParser.Interfaces;
+using FlashTextParser.Repos;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -20,17 +23,15 @@ builder.Services.AddCors(options =>
                                                   .AllowAnyMethod();
                           });
 });
-
+builder.Services.AddScoped<IBannedWordRepository, BannedWordRepository>();
 
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+ app.UseSwagger();
+ app.UseSwaggerUI();
+
 app.UseCors(MyAllowSpecificOrigins);
 
 app.UseHttpsRedirection();
