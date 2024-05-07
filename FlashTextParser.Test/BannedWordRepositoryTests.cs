@@ -1,17 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
-using Moq;
 using System;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
-using FlashTextParser.Controllers;
 using FlashTextParser.Models;
 using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Http;
-using System.Text;
-using System.IO;
-using System.Text.Json;
 using System.Linq;
 using FlashTextParser.Repos;
 

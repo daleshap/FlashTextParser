@@ -1,10 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System.Data;
-using System.Collections.Generic;
-using System.Data.SqlClient;
+﻿using Microsoft.AspNetCore.Mvc;
 using FlashTextParser.Models;
-using System.Text.RegularExpressions;
 using FlashTextParser.Interfaces;
 
 namespace FlashTextParser.Controllers
